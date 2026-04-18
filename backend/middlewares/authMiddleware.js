@@ -3,7 +3,7 @@ import {catchAsyncError} from "./catchAsyncError.js";
 import ErrorHandler from "./errorMiddleware.js";
 import database from "../database/db.js";
 
-export const isAuthnticated = catchAsyncError(async (req, res, next) => {
+export const isAuthenticated = catchAsyncError(async (req, res, next) => {
     const {token} = req.cookies;
     if(!token){
         return next(new ErrorHandler("Please login to access this resource.", 401));
