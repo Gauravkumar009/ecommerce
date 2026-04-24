@@ -47,7 +47,7 @@ export const fetchAllProducts = catchAsyncError(async (req, res, next) => {
     const offset = (page - 1) * limit;
 
     const conditions = [];
-    let values = [];  // ✅ fixed
+    let values = [];  
     let index = 1;
 
     let paginationPlaceholders = {};
