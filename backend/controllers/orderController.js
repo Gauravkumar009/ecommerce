@@ -12,21 +12,21 @@ export const placeNewOrder = catchAsyncError(async (req, res, next) => {
         address,
         pincode,
         phone,
-        ordereditems
+        orderedItems
     } = req.body;
 
     if (!full_name || !state || !city || !country || !address || !pincode || !phone) {
         return next(new ErrorHandler("Please provide all complete shipping details.", 400));
     }
 
-    const item = Array.isArray(orderedItems) ? orderedItems : JSON.stringify(orderedItems);
+    const items = Array.isArray(orderedItems) ? orderedItems : JSON.stringify(orderedItems);
 
-    if (!item || item.length === 0) {
+    if (!items || items.length === 0) {
         return next(new ErrorHandler("No items in the cart.", 400));
     }
 
     const productIds = items.map((item) => item.product.id);
-    const { rows: products } = await database.query(`SELECT id, price FROM products WHERE id = ANY($1::uuid[])`, [productIds]);
+    const { rows: products } = await database.query(`SELECT id, price, stock, name  FROM products WHERE id = ANY($1::uuid[])`, [productIds]);
 
     let total_price = 0;
     const values = [];
@@ -81,8 +81,21 @@ export const placeNewOrder = catchAsyncError(async (req, res, next) => {
     );
 
     await database.query(`
-        INSERT INTO shipping_details (order_id, full_name, state, city, country, address, pincode, phone) VALUES ($1,$2,$3,$4,$5,$6,$7,$8) RETURNING *
+        INSERT INTO shipping_info (order_id, full_name, state, city, country, address, pincode, phone) VALUES ($1,$2,$3,$4,$5,$6,$7,$8) RETURNING *
         `, [orderId, full_name, state, city, country, address, pincode, phone]      
-        );
+    );
+
+    const paymentResponse = await generatePaymentIntent(orderId, total_price);
+
+    if(!paymentResponse.success){
+        return next(new ErrorHandler("Payment failed. Try again.", 500 ));
+    }
+
+    res.status(200).json({
+        success: true,
+        message: "Order placed successfully, Please proceed to payment.",
+        paymentIntent: paymentResponse.clientSecret, total_price,
+    })
+
 });
 

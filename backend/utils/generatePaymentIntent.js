@@ -1,24 +1,37 @@
-import databse from "../database/db.js";
-import razorpay from "razorpay";
+import database from "../database/db.js";
+import Razorpay from "razorpay";
 
-const razorpay = razorpay(process.env.RAZORPAY_KEY_SECRET);
 
-export async function generatePaymentIntent(orderId, totalPrice){
-    try{
-      const paymentIntent = await razorpay.paymentIntents.create({
-        amount: totalPrice * 100,
-        currency: "usd"
-      })
+export async function generatePaymentIntent(orderId, totalPrice) {
+    try {
+        const razorpayInstance = new Razorpay({
+            key_id: process.env.RAZORPAY_KEY_ID,
+            key_secret: process.env.RAZORPAY_SECRET_KEY,
+        });
+        const options = {
+            amount: totalPrice * 100,
+            currency: "INR",
+            receipt: orderId,
+        };
 
-       await databse.query("INSERT INTO payments (order_id, payment_type, payment_status, payment_intent_id) VALUES ($1, $2, $3, $4) RETURNING *",
-        [orderId, "online", "pending", paymentIntent.client_secret]
-       );
+        const order = await razorpayInstance.orders.create(options);
 
-       return {success: true, clientSecret: paymentIntent.client_secret };
+        await database.query(
+            `INSERT INTO payments 
+            (order_id, payment_type, payment_status, payment_intent_id) 
+            VALUES ($1, $2, $3, $4) RETURNING *`,
+            [orderId, "Online", "Pending", order.id]
+        );
 
-    }catch(error){
+        return {
+            success: true,
+            clientSecret: order.id,
+        };
+
+    } catch (error) {
         console.error("Payment Error:", error.message || error);
-        return {success: false, message: "Payment Failed."}
-
+        return { success: false, message: "Payment Failed." };
     }
+    console.error("Payment Error:", error.message || error);
+
 }

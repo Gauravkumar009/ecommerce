@@ -8,8 +8,10 @@ import { errorMiddleware } from "./middlewares/errorMiddleware.js";
 import authRoutes from "./router/authRoutes.js";
 import productRouter from "./router/productRoutes.js";
 import adminRouter from "./router/adminRoutes.js";
+import orderRouter from "./router/orderRoutes.js";
 // import razporpay from "razorpay";
 // import database from "./config/database.js";
+
 
 const app = express();
 
@@ -72,7 +74,7 @@ app.post("/api/v1/payment/webhook",
         }
         res.status(200).send({ received: true });
     }
-)
+);
 
 
 app.use(cookieParser());
@@ -89,7 +91,7 @@ app.use(
 app.use("/api/v1/auth", authRoutes);
 app.use("/api/v1/product", productRouter);
 app.use("/api/v1/admin", adminRouter);
-
+app.use("/api/v1/order", orderRouter);
 
 createTables();
 
