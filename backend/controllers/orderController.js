@@ -19,7 +19,7 @@ export const placeNewOrder = catchAsyncError(async (req, res, next) => {
         return next(new ErrorHandler("Please provide all complete shipping details.", 400));
     }
 
-    const items = Array.isArray(orderedItems) ? orderedItems : JSON.stringify(orderedItems);
+    const items = Array.isArray(orderedItems) ? orderedItems : JSON.parse(orderedItems);
 
     if (!items || items.length === 0) {
         return next(new ErrorHandler("No items in the cart.", 400));
@@ -59,8 +59,8 @@ export const placeNewOrder = catchAsyncError(async (req, res, next) => {
         placeholders.push(`($${offset + 1}, $${offset + 2}, $${offset + 3}, $${offset + 4}, $${offset + 5}, $${offset + 6})`);
     })
 
-    const tax_price = 0.008;
-    const shipping_price = 2;
+    const tax_price = 0.18;
+    const shipping_price = total_price >= 50 ? 0 : 2;
     total_price = Math.round(
         total_price + total_price * tax_price + shipping_price
     );
@@ -69,9 +69,9 @@ export const placeNewOrder = catchAsyncError(async (req, res, next) => {
         [req.user.id, total_price, tax_price, shipping_price]
     );
 
-    const orderId =  orderResult.rows[0].id;
+    const orderId = orderResult.rows[0].id;
 
-    for(let i = 0; i < values.length; i += 6){
+    for (let i = 0; i < values.length; i += 6) {
         values[i] = orderId;
     }
 
@@ -82,13 +82,13 @@ export const placeNewOrder = catchAsyncError(async (req, res, next) => {
 
     await database.query(`
         INSERT INTO shipping_info (order_id, full_name, state, city, country, address, pincode, phone) VALUES ($1,$2,$3,$4,$5,$6,$7,$8) RETURNING *
-        `, [orderId, full_name, state, city, country, address, pincode, phone]      
+        `, [orderId, full_name, state, city, country, address, pincode, phone]
     );
 
     const paymentResponse = await generatePaymentIntent(orderId, total_price);
 
-    if(!paymentResponse.success){
-        return next(new ErrorHandler("Payment failed. Try again.", 500 ));
+    if (!paymentResponse.success) {
+        return next(new ErrorHandler("Payment failed. Try again.", 500));
     }
 
     res.status(200).json({
@@ -99,3 +99,169 @@ export const placeNewOrder = catchAsyncError(async (req, res, next) => {
 
 });
 
+export const fetchSingleOrder = catchAsyncError(async (req, res, next) => {
+    const { orderId } = req.params;
+
+    const result = await database.query(`
+    SELECT 
+    o.*, 
+    COALESCE(
+    json_agg(
+    json_build_object(
+    'order_item_id', oi.id,
+    'order_id', oi.order_id,
+    'product_id', oi.product_id,
+    'quantity', oi.quantity,
+    'price', oi.price
+    )
+     ) FILTER (WHERE oi.id IS NOT NULL), '[]'
+     ) AS order_items,
+    json_build_object(
+     'full_name', s.full_name,
+    'state', s.state,
+    'city', s.city,
+    'country', s.country,
+    'address', s.address,
+    'pincode', s.pincode,
+    'phone', s.phone
+    ) AS shipping_info
+    FROM orders o
+    LEFT JOIN order_items oi ON o.id = oi.order_id
+    LEFT JOIN shipping_info s ON o.id = s.order_id
+    WHERE o.id = $1
+    GROUP BY o.id, s.id;
+    `,
+        [orderId]
+    );
+
+    res.status(200).json({
+        success: true,
+        message: "Orders fetched.",
+        orders: result.rows[0],
+    });
+});
+
+export const fetchMyOrders = catchAsyncError(async (req, res, next) => {
+    const result = await database.query(
+        `
+        SELECT o.*, COALESCE(
+     json_agg(
+      json_build_object(
+     'order_item_id', oi.id,
+     'order_id', oi.order_id,
+     'product_id', oi.product_id,
+     'quantity', oi.quantity,
+     'price', oi.price,
+     'image', oi.image,
+     'title', oi.title
+      ) 
+     ) FILTER (WHERE oi.id IS NOT NULL), '[]'
+     ) AS order_items,
+    json_build_object(
+     'full_name', s.full_name,
+     'state', s.state,
+     'city', s.city,
+     'country', s.country,
+     'address', s.address,
+     'pincode', s.pincode,
+     'phone', s.phone
+     ) AS shipping_info 
+     FROM orders o
+     LEFT JOIN order_items oi ON o.id = oi.order_id
+     LEFT JOIN shipping_info s ON o.id = s.order_id
+    WHERE o.buyer_id = $1
+    GROUP BY o.id, s.id
+        `,
+        [req.user.id]
+    );
+
+    res.status(200).json({
+        success: true,
+        message: "All your orders are fetched.",
+        myOrders: result.rows,
+    });
+});
+
+export const fetchAllOrders = catchAsyncError(async (req, res, next) => {
+    const result = await database.query(`
+        SELECT o.*,
+        COALESCE(json_agg(
+        json_build_object(
+        'order_item_id', oi.id,
+        'order_id', oi.order_id,
+        'product_id', oi.product_id,
+        'quantity', oi.quantity,
+        'price', oi.price,
+        'image', oi.image,
+        'title', oi.title
+    )
+    ) FILTER (WHERE oi.id IS NOT NULL), '[]' ) AS order_items, json_build_object(
+        'full_name', s.full_name,
+        'state', s.state,
+        'city', s.city,
+        'country', s.country,
+        'address', s.address,
+        'pincode', s.pincode,
+        'phone', s.phone 
+    ) AS shipping_info
+    FROM orders o
+    LEFT JOIN order_items oi ON o.id = oi.order_id
+    LEFT JOIN shipping_info s ON o.id = s.order_id
+    GROUP BY o.id, s.id
+    `);
+
+    res.status(200).json({
+    success: true,
+    message: "All orders fetched.",
+    orders: result.rows,
+  });
+});
+
+export const updateOrderStatus = catchAsyncError(async (req, res, next) => {
+  const { status } = req.body;
+  if (!status) {
+    return next(new ErrorHandler("Provide a valid status for order.", 400));
+  }
+  const { orderId } = req.params;
+  const results = await database.query(
+    `
+    SELECT * FROM orders WHERE id = $1
+    `,
+    [orderId]
+  );
+
+  if (results.rows.length === 0) {
+    return next(new ErrorHandler("Invalid order ID.", 404));
+  }
+
+  const updatedOrder = await database.query(
+    `
+    UPDATE orders SET order_status = $1 WHERE id = $2 RETURNING *
+    `,
+    [status, orderId]
+  );
+
+  res.status(200).json({
+    success: true,
+    message: "Order status updated.",
+    updatedOrder: updatedOrder.rows[0],
+  });
+});
+
+export const deleteOrder = catchAsyncError(async (req, res, next) => {
+    const { orderId } = req.params;
+    const results = await database.query(
+        `
+        DELETE FROM orders WHERE id = $1 RETURNING *
+        `,
+        [orderId]
+    );
+    if (results.rows.length === 0) {
+        return next(new ErrorHandler("Invalid order ID.", 404));
+    }
+    res.status(200).json({
+        success: true,
+        message: "Order deleted successfully.",
+        order: results.rows[0],
+    });
+});
