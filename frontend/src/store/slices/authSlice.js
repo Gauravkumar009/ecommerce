@@ -1,7 +1,10 @@
 import { createSlice, createAsyncThunk } from "@reduxjs/toolkit";
 import { axiosInstance } from "../../lib/axios";
 import { toast } from "react-toastify";
+import { toggleAuthPopup } from "./popupSlice";
 
+const getErrorMessage = (error, fallback = "Something went wrong") =>
+  error.response?.data?.message || error.message || fallback;
 
 export const register = createAsyncThunk(
   "auth/register",
@@ -12,8 +15,10 @@ export const register = createAsyncThunk(
       thunkAPI.dispatch(toggleAuthPopup());
       return res.data.user;
     } catch (error) {
-      toast.error(error.response.data.message);
-      return thunkAPI.rejectWithValue(error.response.data.message);}
+      const message = getErrorMessage(error, "Registration failed");
+      toast.error(message);
+      return thunkAPI.rejectWithValue(message);
+    }
   },
 );
 
@@ -26,8 +31,9 @@ export const login = createAsyncThunk(
       thunkAPI.dispatch(toggleAuthPopup());
       return res.data.user;
     } catch (error) {
-      toast.error(error.response.data.message);
-      return thunkAPI.rejectWithValue(error.response.data.message);
+      const message = getErrorMessage(error, "Login failed");
+      toast.error(message);
+      return thunkAPI.rejectWithValue(message);
     }
   },
 );
@@ -39,7 +45,7 @@ export const getUser = createAsyncThunk(
       const res = await axiosInstance.get("/auth/me");
       return res.data.user;
     } catch (error) {
-      return thunkAPI.rejectWithValue(error.response.data.message || "Failed to get user");
+      return thunkAPI.rejectWithValue(getErrorMessage(error, "Failed to get user"));
     }
   },
 );
@@ -47,41 +53,50 @@ export const getUser = createAsyncThunk(
 export const logout = createAsyncThunk(
   "auth/logout",
   async (_, thunkAPI) => {
-     try {
+    try {
       const res = await axiosInstance.get("/auth/logout");
-      thunkAPI.dispatch(toggleAuthPopup());
+      toast.success(res.data.message || "Logged Out Successfully");
       return null;
     } catch (error) {
-      toast.error(error.response.data.message);
-      return thunkAPI.rejectWithValue(error.response.data.message || "Failed to logout");
+      const message = getErrorMessage(error, "Failed to logout");
+      toast.error(message);
+      return thunkAPI.rejectWithValue(message);
     }
   },
 );
 
 export const forgotPassword = createAsyncThunk(
   "auth/forgotPassword",
-  async (email, thunkAPI) => {
+  async (data, thunkAPI) => {
     try {
-      const res = await axiosInstance.post("/auth/Password/forgot?frontendUrl=http://localhost:5173", email);
+      const res = await axiosInstance.post(
+        "/auth/password/forgot?frontend_URL=http://localhost:5173",
+        data
+      );
       toast.success(res.data.message);
       return null;
     } catch (error) {
-      toast.error(error.response.data.message);
-      return thunkAPI.rejectWithValue(error.response.data.message);
+      const message = getErrorMessage(error, "Failed to send reset email");
+      toast.error(message);
+      return thunkAPI.rejectWithValue(message);
     }
   },
 );
 
 export const resetPassword = createAsyncThunk(
   "auth/Password/reset",
-  async ({ token, password , confirmPassword }, thunkAPI) => {
+  async ({ token, password, confirmPassword }, thunkAPI) => {
     try {
-      const res = await axiosInstance.post(`/auth/Password/reset/${token}`, { password, confirmPassword });
+      const res = await axiosInstance.put(`/auth/password/reset/${token}`, {
+        password,
+        confirmPassword,
+      });
       toast.success(res.data.message);
       return res.data.user;
     } catch (error) {
-      toast.error(error.response.data.message || "Failed to reset password");
-      return thunkAPI.rejectWithValue(error.response.data.message);
+      const message = getErrorMessage(error, "Failed to reset password");
+      toast.error(message);
+      return thunkAPI.rejectWithValue(message);
     }
   },
 );
@@ -90,12 +105,13 @@ export const updatePassword = createAsyncThunk(
   "auth/Password/update",
   async (data, thunkAPI) => {
     try {
-      const res = await axiosInstance.post("/auth/Password/update", data);
+      const res = await axiosInstance.put("/auth/password/update", data);
       toast.success(res.data.message);
       return null;
     } catch (error) {
-      toast.error(error.response.data.message);
-      return thunkAPI.rejectWithValue(error.response.data.message);
+      const message = getErrorMessage(error, "Failed to update password");
+      toast.error(message);
+      return thunkAPI.rejectWithValue(message);
     }
   },
 );
@@ -104,12 +120,13 @@ export const updateProfile = createAsyncThunk(
   "auth/me/update",
   async (data, thunkAPI) => {
     try {
-      const res = await axiosInstance.post("/auth/profile/update", data);
+      const res = await axiosInstance.put("/auth/profile/update", data);
       toast.success(res.data.message);
       return res.data.user;
     } catch (error) {
-      toast.error(error.response.data.message);
-      return thunkAPI.rejectWithValue(error.response.data.message);
+      const message = getErrorMessage(error, "Failed to update profile");
+      toast.error(message);
+      return thunkAPI.rejectWithValue(message);
     }
   },
 );
@@ -149,7 +166,6 @@ const authSlice = createSlice({
     })
     .addCase(getUser.pending, (state) => {
       state.isCheckingAuth = true;
-      state.authUser = null;
     })
     .addCase(getUser.fulfilled, (state, action) => {
       state.isCheckingAuth = false;
@@ -160,7 +176,7 @@ const authSlice = createSlice({
       state.authUser = null;
     })
     .addCase(logout.fulfilled, (state) => {
-      state.authUser = {};
+      state.authUser = null;
     })
     .addCase(logout.rejected, (state) => {
       state.authUser = state.authUser;

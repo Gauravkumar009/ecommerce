@@ -19,7 +19,7 @@ config({ path: "./config/config.env" });
 
 app.use(
     cors({
-        origin: [process.env.FRONTEND_URL, process.env.DASHBOARD_URL],
+        origin: [process.env.FRONTEND_URL, process.env.DASHBOARD_URL, "http://localhost:5173", "http://localhost:5174"].filter(Boolean),
         methods: ["GET", "POST", "PUT", "DELETE"],
         credentials: true,
     })
@@ -49,12 +49,12 @@ app.post("/api/v1/payment/webhook",
                 const paymentTableUpdateResult = await database.query(`UPDATE payments SET payment_status = $1
                 WHERE payment_intent_id = $2 RETURNING *`, [updatedPaymentStatus, paymentIntent_client_secret]
                 );
-                await database.query(`UPDATE orders SET paid_at = NOW() WHERE id = $! RETURNING *`,
+                await database.query(`UPDATE orders SET paid_at = NOW() WHERE id = $1 RETURNING *`,
                     [paymentTableUpdateResult.rows[0].order_id]
                 );
 
                 //Reduce stock for each Product
-                const orderId = paymentTableUpdateResult.rows[0].roder_id;
+                const orderId = paymentTableUpdateResult.rows[0].order_id;
                 const { rows: orderedItems } = await database.query(`
                 SELECT product_id, quantity FROM order_items WHERE order_id = $1
                 `, [orderId]

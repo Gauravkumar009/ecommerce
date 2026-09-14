@@ -12,9 +12,10 @@ export const sendToken = (user, statusCode, message, res) => {
     res.status(statusCode)
         .cookie("token", token, {
             expires: new Date(
-                Date.now() + process.env.COOKIE_EXPIRES_IN * 24 * 60 * 60 * 1000
+                Date.now() + Number(process.env.COOKIE_EXPIRES_IN || 30) * 24 * 60 * 60 * 1000
             ),
             httpOnly: true,
+            sameSite: "lax",
         })
         .json({
             success: true,

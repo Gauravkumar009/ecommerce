@@ -1,6 +1,12 @@
+import { useEffect } from "react";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { ThemeProvider } from "./contexts/ThemeContext";
 import { ToastContainer } from "react-toastify";
+import "react-toastify/dist/ReactToastify.css";
+import { useDispatch, useSelector } from "react-redux";
+import { getUser } from "./store/slices/authSlice";
+import { fetchAllProducts } from "./store/slices/productSlice";
+import { Loader } from "lucide-react";
 
 // Layout Components
 import Navbar from "./components/Layout/Navbar";
@@ -24,6 +30,23 @@ import Contact from "./pages/Contact";
 import NotFound from "./pages/NotFound";
 
 const App = () => {
+  const { authUser, isCheckingAuth } = useSelector((state) => state.auth);
+  const { products } = useSelector((state) => state.product || {});
+  const dispatch = useDispatch();
+
+  useEffect(() => {
+    dispatch(getUser());
+    dispatch(fetchAllProducts({}));
+  }, [dispatch]);
+
+  if ((isCheckingAuth && !authUser) || !products) {
+    return (
+      <div className="flex items-center justify-center h-screen">
+        <Loader className="size-10 animate-spin" />
+      </div>
+    );
+  }
+
   return (
     <>
       <ThemeProvider>
