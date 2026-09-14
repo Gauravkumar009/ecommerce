@@ -8,7 +8,7 @@ export const fetchAllProducts = createAsyncThunk(
   async (
     {
       availability,
-      price = "0-10000",
+      price = "",
       category = "",
       ratings = "",
       search = "",
@@ -121,9 +121,21 @@ const productSlice = createSlice({
       })
       .addCase(fetchAllProducts.fulfilled, (state, action) => {
         state.loading = false;
-        state.products = action.payload?.products || [];
-        state.newProducts = action.payload?.newProducts || [];
-        state.topRatedProducts = action.payload?.topRatedProducts || [];
+        const fetchedProducts = action.payload?.products || [];
+        state.products = fetchedProducts;
+        state.newProducts =
+          action.payload?.newProducts && action.payload.newProducts.length > 0
+            ? action.payload.newProducts
+            : fetchedProducts.slice(0, 50);
+
+        const topRatedFromApi =
+          action.payload?.topRatedProducts && action.payload.topRatedProducts.length > 0
+            ? action.payload.topRatedProducts
+            : fetchedProducts;
+
+        state.topRatedProducts = topRatedFromApi.filter(
+          (p) => Number(p.ratings) > 4
+        );
         state.totalProducts = action.payload?.totalProducts || 0;
       })
       .addCase(fetchAllProducts.rejected, (state) => {

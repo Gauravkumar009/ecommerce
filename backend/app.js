@@ -9,8 +9,7 @@ import authRoutes from "./router/authRoutes.js";
 import productRouter from "./router/productRoutes.js";
 import adminRouter from "./router/adminRoutes.js";
 import orderRouter from "./router/orderRoutes.js";
-// import razporpay from "razorpay";
-// import database from "./config/database.js";
+import database from "./database/db.js";
 
 
 const app = express();

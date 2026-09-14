@@ -130,10 +130,9 @@ export const fetchAllProducts = catchAsyncError(async (req, res, next) => {
     SELECT p.*, COUNT(r.id) AS review_count
     FROM products p
     LEFT JOIN reviews r ON p.id = r.product_id
-    WHERE p.created_at >= NOW() - INTERVAL '30 days'
     GROUP BY p.id
     ORDER BY p.created_at DESC
-    LIMIT 8`;
+    LIMIT 50`;
 
     const newProductsResult = await database.query(newProductsQuery);
 
@@ -142,10 +141,10 @@ export const fetchAllProducts = catchAsyncError(async (req, res, next) => {
     SELECT p.*, COUNT(r.id) AS review_count
     FROM products p
     LEFT JOIN reviews r ON p.id = r.product_id
-    WHERE p.ratings >= 4.5
+    WHERE p.ratings > 4
     GROUP BY p.id
     ORDER BY p.ratings DESC, p.created_at DESC
-    LIMIT 8`;
+    LIMIT 20`;
 
     const topRatedResult = await database.query(topRatedQuery);
 
@@ -313,7 +312,7 @@ export const postProductReview = catchAsyncError(async (req, res, next) => {
     const newAvgRating = allReviews.rows[0].avg_rating;
 
     const updatedProduct = await database.query(`
-        UPDATE products SET rating = $1 WHERE id = $2 RETURNING *`, [newAvgRating, productId]
+        UPDATE products SET ratings = $1 WHERE id = $2 RETURNING *`, [newAvgRating, productId]
     );
 
     res.status(200).json({
@@ -339,7 +338,7 @@ export const deleteReview = catchAsyncError(async (req, res, next) => {
     const newAvgRating = allReviews.rows[0].avg_rating;
 
     const updatedProduct = await database.query(
-        `UPDATE products SET rating = $1 WHERE id = $2 RETURNING *`, [newAvgRating, productId]
+        `UPDATE products SET ratings = $1 WHERE id = $2 RETURNING *`, [newAvgRating, productId]
     );
 
     res.status(200).json({
