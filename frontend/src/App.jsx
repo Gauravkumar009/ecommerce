@@ -33,11 +33,20 @@ const App = () => {
   const { authUser, isCheckingAuth } = useSelector((state) => state.auth);
   const { products } = useSelector((state) => state.product || {});
   const dispatch = useDispatch();
+  useEffect(()=>{
+    dispatch(getUser());
+  },[getUser]);
 
   useEffect(() => {
-    dispatch(getUser());
-    dispatch(fetchAllProducts({}));
-  }, [dispatch]);
+    dispatch(fetchAllProducts({
+      category:"",
+      price:"",
+      search:"",
+      rating:"",
+      availability:"",
+      page:1,
+    }));
+  }, []);
 
   if ((isCheckingAuth && !authUser) || !products) {
     return (
