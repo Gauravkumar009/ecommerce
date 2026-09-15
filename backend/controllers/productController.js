@@ -445,34 +445,45 @@ export const fetchAIFilteredProducts = catchAsyncError(async(req, res, next) =>{
     };
 
     const keywords = filterKeywords(userPrompt);
-    // STEP:1 Basic SQL Filtering
+    // STEP 1: Basic SQL Filtering
+    let filteredProducts = [];
 
-    const result = await database.query(`
-        SELECT * FROM products
-        WHERE name ILIKE ANY($1)
-        OR description ILIKE ANY($1)
-        OR category ILIKE ANY($1)
-        LIMIT 200;
-        `,
-        [keywords]);
+    if (keywords.length > 0) {
+        const result = await database.query(
+            `
+            SELECT * FROM products
+            WHERE name ILIKE ANY($1)
+            OR description ILIKE ANY($1)
+            OR category ILIKE ANY($1)
+            LIMIT 200;
+            `,
+            [keywords]
+        );
+        filteredProducts = result.rows;
+    }
 
-       const filteredProducts = result.rows;
-       
-       if(filteredProducts.length === 0){
+    // Fallback: If keyword match is empty or returns no results, evaluate against top store products
+    if (filteredProducts.length === 0) {
+        const fallbackResult = await database.query(
+            `SELECT * FROM products ORDER BY ratings DESC, created_at DESC LIMIT 100;`
+        );
+        filteredProducts = fallbackResult.rows;
+    }
+
+    if (filteredProducts.length === 0) {
         return res.status(200).json({
             success: true,
             message: "No products found matching your prompt.",
             products: [],
         });
-       }
+    }
 
-       //STEP 2: AT FILTERING
+    // STEP 2: AI FILTERING
+    const aiResult = await getAIRecommendation(req, res, userPrompt, filteredProducts);
 
-       const {success, products} = await getAIRecommendation(req, res, userPrompt, filteredProducts)
-
-       res.status(200).json({
-        success: success,
+    res.status(200).json({
+        success: true,
         message: "AI filtered products.",
-        products,
-       })
+        products: aiResult?.products || filteredProducts,
+    });
 })
