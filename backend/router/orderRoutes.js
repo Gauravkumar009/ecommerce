@@ -1,11 +1,11 @@
 import express from "express";
 import {
-  fetchSingleOrder,
-  placeNewOrder,
-  fetchMyOrders,
-  fetchAllOrders,
-  updateOrderStatus,
-  deleteOrder,
+     fetchSingleOrder,
+     placeNewOrder,
+     fetchMyOrders,
+     fetchAllOrders,
+     updateOrderStatus,
+     deleteOrder,
 } from "../controllers/orderController.js";
 import {
   isAuthenticated,
@@ -14,8 +14,9 @@ import {
 
 const router = express.Router();
 router.post("/new", isAuthenticated, placeNewOrder);
-router.get("/:orderId", isAuthenticated, fetchSingleOrder);
+router.get("/me", isAuthenticated, fetchMyOrders);
 router.get("/orders/me", isAuthenticated, fetchMyOrders);
+router.get("/:orderId", isAuthenticated, fetchSingleOrder);
 router.get(
   "/admin/getall",
   isAuthenticated,

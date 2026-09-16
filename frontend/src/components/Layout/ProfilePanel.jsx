@@ -1,24 +1,21 @@
 import { useEffect, useState } from "react";
-import { X, LogOut, Upload, Eye, EyeOff } from "lucide-react";
+import { X, LogOut, Upload, Eye, EyeOff, Package } from "lucide-react";
+import { useNavigate } from "react-router-dom";
 import { useDispatch, useSelector } from "react-redux";
-import { logout, updatePassword, updateProfile } from "../../store/slices/authSlice";
+import { logout, updateProfile, updatePassword } from "../../store/slices/authSlice";
 import { toggleAuthPopup } from "../../store/slices/popupSlice";
 
 const ProfilePanel = () => {
   const dispatch = useDispatch();
+  const navigate = useNavigate();
   const { isAuthPopupOpen } = useSelector((state) => state.popup);
   const { authUser, isUpdatingProfile, isUpdatingPassword } = useSelector(
-    (state) => state.auth,
+    (state) => state.auth
   );
 
   const [name, setName] = useState(authUser?.name || "");
   const [email, setEmail] = useState(authUser?.email || "");
-  const [avatar, setAvatar] = useState(authUser?.avatar || "");
-
-  const [showPassword, setShowPassword] = useState(false);
-  const [currentPassword, setCurrentPassword] = useState("");
-  const [newPassword, setNewPassword] = useState("");
-  const [confirmNewPassword, setConfirmNewPassword] = useState("");
+  const [avatar, setAvatar] = useState(null);
 
   useEffect(() => {
     if (authUser) {
@@ -26,6 +23,11 @@ const ProfilePanel = () => {
       setEmail(authUser.email || "");
     }
   }, [authUser]);
+
+  const [showPassword, setShowPassword] = useState(false);
+  const [currentPassword, setCurrentPassword] = useState("");
+  const [newPassword, setNewPassword] = useState("");
+  const [confirmNewPassword, setConfirmNewPassword] = useState("");
 
   const handleLogout = () => {
     dispatch(logout());
@@ -40,19 +42,11 @@ const ProfilePanel = () => {
   };
 
   const handleUpdatePassword = () => {
-    dispatch(
-      updatePassword({
-        currentPassword,
-        newPassword,
-        confirmNewPassword,
-      })
-    ).then((res) => {
-      if (!res.error) {
-        setCurrentPassword("");
-        setNewPassword("");
-        setConfirmNewPassword("");
-      }
-    });
+    const formData = new FormData();
+    formData.append("currentPassword", currentPassword);
+    formData.append("newPassword", newPassword);
+    formData.append("confirmNewPassword", confirmNewPassword);
+    dispatch(updatePassword(formData));
   };
 
   if (!isAuthPopupOpen || !authUser) return null;
@@ -64,7 +58,6 @@ const ProfilePanel = () => {
         className="fixed inset-0 bg-black/50 backdrop-blur-sm z-40"
         onClick={() => dispatch(toggleAuthPopup())}
       />
-
       {/* PROFILE PANEL */}
       <div className="fixed right-0 top-0 h-full w-96 z-50 glass-panel animate-slide-in-right overflow-y-auto">
         <div className="flex items-center justify-between p-6 border-b border-[hsla(var(--glass-border))]">
@@ -72,6 +65,7 @@ const ProfilePanel = () => {
           <button
             onClick={() => dispatch(toggleAuthPopup())}
             className="p-2 rounded-lg glass-card hover:glow-on-hover animate-smooth"
+            type="button"
           >
             <X className="w-5 h-5 text-primary" />
           </button>
@@ -85,10 +79,22 @@ const ProfilePanel = () => {
               alt={authUser?.name}
               className="w-20 h-20 rounded-full mx-auto mb-4 border-2 border-primary object-cover"
             />
-            <h3 className="text-lg font-semibold text-primary">
+            <h3 className="text-lg font-semibold text-foreground">
               {authUser?.name}
             </h3>
-            <p className="text-muted-foreground">{authUser?.email}</p>
+            <p className="text-muted-foreground text-sm mb-4">{authUser?.email}</p>
+
+            {/* QUICK LINK TO MY ORDERS */}
+            <button
+              onClick={() => {
+                dispatch(toggleAuthPopup());
+                navigate("/orders");
+              }}
+              className="w-full flex items-center justify-center gap-2 py-2.5 px-4 rounded-xl bg-primary/10 hover:bg-primary/20 text-primary border border-primary/20 text-sm font-semibold transition-all"
+            >
+              <Package className="w-4 h-4" />
+              <span>View My Orders</span>
+            </button>
           </div>
 
           {/* PROFILE UPDATE FORM */}
@@ -124,14 +130,13 @@ const ProfilePanel = () => {
               <button
                 onClick={handleUpdateProfile}
                 disabled={isUpdatingProfile}
-                className="flex justify-center items-center space-x-3 p-3 rounded-lg glass-card hover:glow-on-hover animate-smooth group w-full disabled:opacity-50"
+                type="button"
+                className="flex justify-center items-center space-x-3 p-3 rounded-lg glass-card hover:glow-on-hover animate-smooth group w-full font-semibold text-primary disabled:opacity-50"
               >
                 {isUpdatingProfile ? (
                   <>
-                    <div
-                      className={`w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin`}
-                    />
-                    <span>Updating Profile....</span>
+                    <div className="w-5 h-5 border-2 border-primary border-t-transparent rounded-full animate-spin" />
+                    <span>Updating Profile...</span>
                   </>
                 ) : (
                   "Save Changes"
@@ -161,14 +166,14 @@ const ProfilePanel = () => {
             />
             <input
               type={showPassword ? "text" : "password"}
-              placeholder="Confirm Password"
+              placeholder="Confirm New Password"
               value={confirmNewPassword}
               onChange={(e) => setConfirmNewPassword(e.target.value)}
               className="w-full p-2 rounded border border-border bg-secondary text-foreground"
             />
             <button
-              type="button"
               onClick={() => setShowPassword(!showPassword)}
+              type="button"
               className="text-xs text-muted-foreground flex items-center gap-1"
             >
               {showPassword ? (
@@ -176,20 +181,18 @@ const ProfilePanel = () => {
               ) : (
                 <Eye className="w-4 h-4 text-primary" />
               )}
-              {showPassword ? "Hide" : "Show"} Passwords
+              {showPassword ? "Hide" : "Show"} passwords
             </button>
             <button
-              type="button"
               onClick={handleUpdatePassword}
               disabled={isUpdatingPassword}
-              className="flex justify-center items-center space-x-3 p-3 rounded-lg glass-card hover:glow-on-hover animate-smooth group w-full disabled:opacity-50"
+              type="button"
+              className="flex justify-center items-center space-x-3 p-3 rounded-lg glass-card hover:glow-on-hover animate-smooth group w-full font-semibold text-primary disabled:opacity-50"
             >
               {isUpdatingPassword ? (
                 <>
-                  <div
-                    className={`w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin`}
-                  />
-                  <span>Updating Password....</span>
+                  <div className="w-5 h-5 border-2 border-primary border-t-transparent rounded-full animate-spin" />
+                  <span>Updating Password...</span>
                 </>
               ) : (
                 "Update Password"
@@ -197,12 +200,14 @@ const ProfilePanel = () => {
             </button>
           </div>
 
+          {/* LOGOUT BUTTON */}
           <button
             onClick={handleLogout}
-            className="my-6 flex items-center space-x-3 p-3 rounded-lg glass-card hover:glow-on-hover text-destructive hover:text-destructive-foreground group w-full"
+            type="button"
+            className="my-6 flex items-center justify-center space-x-3 p-3 rounded-lg glass-card hover:glow-on-hover text-destructive hover:text-destructive-foreground animate-smooth group w-full font-semibold"
           >
             <LogOut className="w-5 h-5" />
-            <span>Log Out</span>
+            <span>Logout</span>
           </button>
         </div>
       </div>
