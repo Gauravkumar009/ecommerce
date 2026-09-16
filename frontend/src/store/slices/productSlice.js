@@ -105,7 +105,7 @@ const productSlice = createSlice({
   initialState: {
     loading: false,
     products: [],
-    productDetails: {},
+    productDetails: null,
     totalProducts: 0,
     topRatedProducts: [],
     newProducts: [],
@@ -143,13 +143,16 @@ const productSlice = createSlice({
       })
       .addCase(fetchProductDetails.pending, (state) => {
         state.loading = true;
+        state.productDetails = null;
       })
       .addCase(fetchProductDetails.fulfilled, (state, action) => {
         state.loading = false;
-        state.productDetails = action.payload || {};
+        state.productDetails = action.payload;
+        state.productReviews = action.payload?.reviews || [];
       })
       .addCase(fetchProductDetails.rejected, (state) => {
         state.loading = false;
+        state.productDetails = null;
       })
       .addCase(postReview.pending, (state) => {
         state.isPostingReview = true;
@@ -169,7 +172,7 @@ const productSlice = createSlice({
       .addCase(deleteReview.fulfilled, (state, action) => {
         state.isReviewDeleting = false;
         state.productReviews = state.productReviews.filter(
-          (review) => review.id !== action.payload
+          (review) => (review.review_id || review.id) !== action.payload
         );
       })
       .addCase(deleteReview.rejected, (state) => {

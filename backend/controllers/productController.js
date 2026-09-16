@@ -220,6 +220,11 @@ export const deleteProduct = catchAsyncError(async (req, res, next) => {
 export const fetchSingleProduct = catchAsyncError(async (req, res, next) => {
     const { productId } = req.params;
 
+    const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+    if (!productId || !uuidRegex.test(productId)) {
+        return next(new ErrorHandler("Product not found.", 404));
+    }
+
     const result = await database.query(
         `
             SELECT p.*,
@@ -244,10 +249,19 @@ export const fetchSingleProduct = catchAsyncError(async (req, res, next) => {
             GROUP BY p.id`, [productId]
     );
 
+    if (!result.rows || result.rows.length === 0 || !result.rows[0]) {
+        return next(new ErrorHandler("Product not found.", 404));
+    }
+
+    const product = result.rows[0];
+    if (Array.isArray(product.images) && product.images.length > 1) {
+        product.images = product.images.slice(0, 1);
+    }
+
     res.status(200).json({
         success: true,
         message: "Product fetched Successfully.",
-        product: result.rows[0],
+        product,
     });
 });
 

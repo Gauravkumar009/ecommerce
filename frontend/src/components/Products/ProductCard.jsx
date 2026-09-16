@@ -111,19 +111,21 @@ const ProductCard = ({ product }) => {
         </h3>
 
         <div className="flex items-center space-x-2 mb-2">
-          <div className="flex items-center">
+          <div className="flex items-center space-x-0.5">
             {[...Array(5)].map((_, i) => {
-              const filled = ratingVal >= i + 1;
-              const half = !filled && ratingVal >= i + 0.5;
+              const fillPercent = Math.max(
+                0,
+                Math.min(100, Math.round((ratingVal - i) * 100))
+              );
               return (
                 <span key={i} className="relative w-4 h-4 inline-block">
                   {/* Background empty star */}
                   <Star className="w-4 h-4 text-gray-300 absolute inset-0" />
-                  {/* Filled or half-filled overlay */}
-                  {(filled || half) && (
+                  {/* Exact percentage fill overlay */}
+                  {fillPercent > 0 && (
                     <span
                       className="absolute top-0 left-0 overflow-hidden"
-                      style={{ width: filled ? "100%" : "50%", height: "100%" }}
+                      style={{ width: `${fillPercent}%`, height: "100%" }}
                     >
                       <Star className="w-4 h-4 text-yellow-400 fill-current" />
                     </span>
