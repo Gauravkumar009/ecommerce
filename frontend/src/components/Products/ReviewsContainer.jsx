@@ -1,6 +1,6 @@
 import React, { useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
-import { Star } from "lucide-react";
+import { Star, Trash2 } from "lucide-react";
 import { postReview, deleteReview } from "../../store/slices/productSlice";
 
 const ReviewsContainer = ({ product, productReviews }) => {
@@ -85,6 +85,8 @@ const ReviewsContainer = ({ product, productReviews }) => {
         <div className="space-y-4">
           {productReviews.map((review) => {
             const reviewerRating = Number(review?.rating) || 0;
+            const reviewerId = review?.reviewer?.id || review?.user_id || review?.userId;
+            const isOwnReview = String(authUser?.id || "") === String(reviewerId || "");
             return (
               <div
                 key={review.review_id || review.id}
@@ -119,12 +121,15 @@ const ReviewsContainer = ({ product, productReviews }) => {
                       {review.comment}
                     </p>
 
-                    {authUser?.id === review.reviewer?.id && (
+                    {isOwnReview && (
                       <button
+                        type="button"
                         onClick={() => handleDeleteReview(review.review_id || review.id)}
                         disabled={isReviewDeleting}
-                        className="mt-3 text-xs text-rose-400 hover:underline font-medium"
+                        className="mt-3 inline-flex items-center gap-1.5 rounded-lg border border-rose-400/30 px-2.5 py-1.5 text-xs font-medium text-rose-400 transition-colors hover:border-rose-400/60 hover:bg-rose-400/10 disabled:cursor-not-allowed disabled:opacity-50"
+                        aria-label="Delete your review"
                       >
+                        <Trash2 className="h-3.5 w-3.5" />
                         {isReviewDeleting ? "Deleting..." : "Delete Review"}
                       </button>
                     )}

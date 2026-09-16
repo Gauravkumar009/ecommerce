@@ -17,10 +17,11 @@ import {
   Check,
   ShoppingBag,
   RotateCcw,
+  Trash2,
 } from "lucide-react";
 import { useDispatch, useSelector } from "react-redux";
 import { Link, useNavigate } from "react-router-dom";
-import { fetchMyOrders } from "../store/slices/orderSlice";
+import { deleteMyPendingOrder, fetchMyOrders } from "../store/slices/orderSlice";
 import { toggleAuthPopup } from "../store/slices/popupSlice";
 import { toast } from "react-toastify";
 
@@ -56,6 +57,11 @@ const Orders = () => {
     setCopiedId(id);
     toast.info("Order ID copied to clipboard!");
     setTimeout(() => setCopiedId(null), 2000);
+  };
+
+  const handleDeletePendingOrder = async (order) => {
+    if (!window.confirm("Delete this unpaid pending order?")) return;
+    await dispatch(deleteMyPendingOrder(order.id));
   };
 
   const getStatusBadge = (status) => {
@@ -401,6 +407,18 @@ const Orders = () => {
                           <ChevronDown className="w-4 h-4" />
                         )}
                       </button>
+                      {(order.order_status || "Processing").toLowerCase() === "processing" &&
+                        !order.paid_at && (
+                          <button
+                            type="button"
+                            onClick={() => handleDeletePendingOrder(order)}
+                            className="inline-flex items-center gap-1.5 rounded-xl border border-rose-500/30 px-3 py-2 text-xs font-semibold text-rose-400 transition-colors hover:border-rose-500/60 hover:bg-rose-500/10"
+                            title="Delete pending order"
+                          >
+                            <Trash2 className="h-3.5 w-3.5" />
+                            Delete
+                          </button>
+                        )}
                     </div>
                   </div>
 

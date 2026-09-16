@@ -76,7 +76,10 @@ export const deleteReview = createAsyncThunk(
         `/product/delete/review/${productId}`,
       );
       toast.success(res.data.message);
-      return reviewId;
+      return {
+        reviewId,
+        product: res.data.product,
+      };
     } catch (error) {
       const msg = error.response?.data?.message || error.message || "Failed to delete review.";
       toast.error(msg);
@@ -172,8 +175,11 @@ const productSlice = createSlice({
       .addCase(deleteReview.fulfilled, (state, action) => {
         state.isReviewDeleting = false;
         state.productReviews = state.productReviews.filter(
-          (review) => (review.review_id || review.id) !== action.payload
+          (review) => (review.review_id || review.id) !== action.payload.reviewId
         );
+        if (state.productDetails && action.payload.product) {
+          state.productDetails.ratings = action.payload.product.ratings;
+        }
       })
       .addCase(deleteReview.rejected, (state) => {
         state.isReviewDeleting = false;

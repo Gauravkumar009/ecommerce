@@ -30,6 +30,21 @@ export const fetchSingleOrder = createAsyncThunk(
   }
 );
 
+export const deleteMyPendingOrder = createAsyncThunk(
+  "order/deleteMyPendingOrder",
+  async (orderId, thunkAPI) => {
+    try {
+      const res = await axiosInstance.delete(`/order/me/${orderId}`);
+      toast.success(res.data?.message || "Pending order deleted successfully.");
+      return orderId;
+    } catch (error) {
+      const message = error.response?.data?.message || "Failed to delete pending order.";
+      toast.error(message);
+      return thunkAPI.rejectWithValue(message);
+    }
+  },
+);
+
 export const placeNewOrder = createAsyncThunk(
   "order/placeNewOrder",
   async (orderData, thunkAPI) => {
@@ -46,6 +61,24 @@ export const placeNewOrder = createAsyncThunk(
   }
 );
 
+export const verifyRazorpayPayment = createAsyncThunk(
+  "order/verifyRazorpayPayment",
+  async (paymentData, thunkAPI) => {
+    try {
+      const res = await axiosInstance.post("/order/verify-payment", paymentData);
+      toast.success(res.data?.message || "Payment verified successfully!");
+      return res.data;
+    } catch (error) {
+      toast.error(
+        error.response?.data?.message || "Payment verification failed."
+      );
+      return thunkAPI.rejectWithValue(
+        error.response?.data?.message || "Payment verification failed."
+      );
+    }
+  }
+);
+
 const orderSlice = createSlice({
   name: "order",
   initialState: {
@@ -53,9 +86,11 @@ const orderSlice = createSlice({
     singleOrder: null,
     fetchingOrders: false,
     placingOrder: false,
+    verifyingPayment: false,
     finalPrice: null,
     orderStep: 1,
     paymentIntent: "",
+    lastCreatedOrderId: null,
     error: null,
   },
   reducers: {
@@ -99,6 +134,10 @@ const orderSlice = createSlice({
         state.error = action.payload;
       })
 
+      .addCase(deleteMyPendingOrder.fulfilled, (state, action) => {
+        state.myOrders = state.myOrders.filter((order) => order.id !== action.payload);
+      })
+
       // placeNewOrder
       .addCase(placeNewOrder.pending, (state) => {
         state.placingOrder = true;
@@ -108,9 +147,24 @@ const orderSlice = createSlice({
         state.placingOrder = false;
         state.paymentIntent = action.payload?.paymentIntent || "";
         state.finalPrice = action.payload?.total_price || null;
+        state.lastCreatedOrderId = action.payload?.orderId || null;
       })
       .addCase(placeNewOrder.rejected, (state, action) => {
         state.placingOrder = false;
+        state.error = action.payload;
+      })
+
+      // verifyRazorpayPayment
+      .addCase(verifyRazorpayPayment.pending, (state) => {
+        state.verifyingPayment = true;
+        state.error = null;
+      })
+      .addCase(verifyRazorpayPayment.fulfilled, (state, action) => {
+        state.verifyingPayment = false;
+        state.lastCreatedOrderId = action.payload?.orderId || state.lastCreatedOrderId;
+      })
+      .addCase(verifyRazorpayPayment.rejected, (state, action) => {
+        state.verifyingPayment = false;
         state.error = action.payload;
       });
   },
