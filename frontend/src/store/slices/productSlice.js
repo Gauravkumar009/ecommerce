@@ -36,6 +36,20 @@ export const fetchAllProducts = createAsyncThunk(
   },
 );
 
+export const fetchFeaturedProducts = createAsyncThunk(
+  "product/fetchFeatured",
+  async (_, thunkAPI) => {
+    try {
+      const res = await axiosInstance.get("/product/featured");
+      return res.data;
+    } catch (error) {
+      return thunkAPI.rejectWithValue(
+        error.response?.data?.message || error.message || "Failed to fetch featured products",
+      );
+    }
+  },
+);
+
 export const fetchProductDetails = createAsyncThunk(
   "product/singleProduct",
   async (id, thunkAPI) => {
@@ -112,6 +126,7 @@ const productSlice = createSlice({
     totalProducts: 0,
     topRatedProducts: [],
     newProducts: [],
+    featuredLoading: false,
     aiSearching: false,
     isReviewDeleting: false,
     isPostingReview: false,
@@ -126,23 +141,21 @@ const productSlice = createSlice({
         state.loading = false;
         const fetchedProducts = action.payload?.products || [];
         state.products = fetchedProducts;
-        state.newProducts =
-          action.payload?.newProducts && action.payload.newProducts.length > 0
-            ? action.payload.newProducts
-            : fetchedProducts.slice(0, 50);
-
-        const topRatedFromApi =
-          action.payload?.topRatedProducts && action.payload.topRatedProducts.length > 0
-            ? action.payload.topRatedProducts
-            : fetchedProducts;
-
-        state.topRatedProducts = topRatedFromApi.filter(
-          (p) => Number(p.ratings) > 4
-        );
         state.totalProducts = action.payload?.totalProducts || 0;
       })
       .addCase(fetchAllProducts.rejected, (state) => {
         state.loading = false;
+      })
+      .addCase(fetchFeaturedProducts.pending, (state) => {
+        state.featuredLoading = true;
+      })
+      .addCase(fetchFeaturedProducts.fulfilled, (state, action) => {
+        state.featuredLoading = false;
+        state.newProducts = action.payload?.newProducts || [];
+        state.topRatedProducts = action.payload?.topRatedProducts || [];
+      })
+      .addCase(fetchFeaturedProducts.rejected, (state) => {
+        state.featuredLoading = false;
       })
       .addCase(fetchProductDetails.pending, (state) => {
         state.loading = true;

@@ -113,6 +113,7 @@ export const forgotPassword = catchAsyncError(async (req, res, next) => {
     );
 
     const resetPasswordUrl = `${frontend_URL}/password/reset/${resetToken}`;
+    console.log("🔗 Password Reset URL:", resetPasswordUrl);
 
     const message = generateEmailTemplate(resetPasswordUrl);
 
@@ -125,7 +126,7 @@ export const forgotPassword = catchAsyncError(async (req, res, next) => {
 
         res.status(200).json({
             success: true,
-            message: `Email sent to ${user.email} successfully`
+            message: `Email sent to ${user.email} successfully`,
         });
 
     } catch (error) {
@@ -135,6 +136,15 @@ export const forgotPassword = catchAsyncError(async (req, res, next) => {
              WHERE email = $1`,
             [email]
         );
+
+        if (error.message && error.message.includes("535")) {
+            return next(
+                new ErrorHandler(
+                    "Gmail SMTP failed: Your Google App Password in config.env is expired or invalid. Please update SMTP_PASSWORD in backend/config/config.env.",
+                    500
+                )
+            );
+        }
 
         return next(new ErrorHandler(error.message, 500));
     }

@@ -1,45 +1,49 @@
 import React, { useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { Navigate, useParams } from "react-router-dom";
-import {resetPassword} from "../store/slices/authSlice";
+import { resetPassword } from "../store/slices/authSlice";
 
 const ResetPassword = () => {
-  const {token} = useParams();
+  const { token } = useParams();
 
-  const [formData, setFormData] = useState({password:"", confirmPassword:""});
+  const [formData, setFormData] = useState({
+    password: "",
+    confirmPassword: "",
+  });
 
-  const handleChange = (e)=>{
-    setFormData({...formData, [e.target.name]: e.target.value});
+  const handleChange = (e) => {
+    setFormData({ ...formData, [e.target.name]: e.target.value });
   };
 
   const dispatch = useDispatch();
-  const handleSubmit= (e)=>{
+  const handleSubmit = (e) => {
     e.preventDefault();
-    dispatch(resetPassword(data,token));
+    dispatch(resetPassword(formData, token));
   };
 
   const { user, isAuthenticated, loading } = useSelector((state) => state.auth);
-  if (isAuthenticated && user.role === "Admin") {
+  if (isAuthenticated && user?.role === "Admin") {
     return <Navigate to="/" />;
   }
 
   return (
     <>
-      <div classNmae="min-h-screen flex items-center justify-center bg-gradient-to-r from-blue-100 to-purple-200 px-4">
-        <div classNmae="bg-white shadow-lg rounded-2xl max-w-md w-full p-8 sm:p-10">
+      <div className="min-h-screen flex items-center justify-center bg-gradient-to-r from-blue-100 to-purple-200 px-4">
+        <div className="bg-white shadow-lg rounded-2xl max-w-md w-full p-8 sm:p-10">
           <h2 className="text-3xl font-bold text-center text-gray-800 mb-6">
-             Reset Password
+            Reset Password
           </h2>
           <form onSubmit={handleSubmit} className="space-y-5">
             <div className="p-2">
-              <lable
-                htmlFor="email"
+              <label
+                htmlFor="password"
                 className="block text-sm font-medium text-gray-700 mb-1"
               >
                 New Password
-              </lable>
+              </label>
               <input
                 type="password"
+                id="password"
                 name="password"
                 value={formData.password}
                 onChange={handleChange}
@@ -49,15 +53,16 @@ const ResetPassword = () => {
               />
             </div>
             <div className="p-2">
-              <lable
-                htmlFor="confirmpassword"
+              <label
+                htmlFor="confirmPassword"
                 className="block text-sm font-medium text-gray-700 mb-1"
               >
-                Password
-              </lable>
+                Confirm Password
+              </label>
               <input
                 type="password"
-                name="confirmpassword"
+                id="confirmPassword"
+                name="confirmPassword"
                 value={formData.confirmPassword}
                 onChange={handleChange}
                 required
@@ -67,7 +72,7 @@ const ResetPassword = () => {
             </div>
             <div className="px-2">
               <button
-                type="button"
+                type="submit"
                 className="w-full flex justify-center items-center gap-2 rounded-lg bg-blue-600 hover:bg-blue-700 text-white font-semibold py-3 transition"
                 disabled={loading}
               >

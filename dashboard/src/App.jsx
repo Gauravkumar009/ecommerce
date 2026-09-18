@@ -1,3 +1,4 @@
+import { useEffect } from "react";
 import {
   BrowserRouter as Router,
   Routes,
@@ -8,35 +9,50 @@ import Login from "./pages/Login";
 import ForgotPassword from "./pages/ForgotPassword";
 import ResetPassword from "./pages/ResetPassword";
 import { ToastContainer } from "react-toastify";
-import { useSelector } from "react-redux";
+import "react-toastify/dist/ReactToastify.css";
+import { useDispatch, useSelector } from "react-redux";
 import Orders from "./components/Orders";
 import Products from "./components/Products";
 import Users from "./components/Users";
 import Profile from "./components/Profile";
 import Dashboard from "./components/Dashboard";
 import SideBar from "./components/SideBar";
+import { getUser } from "./store/slices/authSlice";
 
 function App() {
   const { openedComponent } = useSelector((state) => state.extra);
-  const { user, isAuthenticated } = useSelector((state) => state.auth);
+  const { user, isAuthenticated, isCheckingAuth } = useSelector(
+    (state) => state.auth
+  );
+  const dispatch = useDispatch();
+
+  useEffect(() => {
+    dispatch(getUser());
+  }, [dispatch]);
+
+  if (isCheckingAuth) {
+    return (
+      <div className="min-h-screen flex flex-col items-center justify-center bg-gray-100">
+        <div className="w-10 h-10 border-4 border-blue-600 border-t-transparent rounded-full animate-spin"></div>
+        <p className="mt-4 text-gray-600 font-medium text-sm">
+          Loading dashboard...
+        </p>
+      </div>
+    );
+  }
 
   const renderDashboardContent = () => {
     switch (openedComponent) {
       case "Dashboard":
-        <Dashboard />;
-        break;
+        return <Dashboard />;
       case "Orders":
-        <Orders />;
-        break;
+        return <Orders />;
       case "Users":
-        <Users />;
-        break;
+        return <Users />;
       case "Profile":
-        <Profile />;
-        break;
+        return <Profile />;
       case "Products":
-        <Products />;
-        break;
+        return <Products />;
       default:
         return <Dashboard />;
     }
@@ -45,10 +61,36 @@ function App() {
   return (
     <Router>
       <Routes>
-        <Route path="/login" element={<Login />} />
-        <Route path="/password/forgot" element={<ForgotPassword />} />
-        <Route path="/password/reset/:token" element={<ResetPassword />} />
-
+        <Route
+          path="/login"
+          element={
+            isAuthenticated && user?.role === "Admin" ? (
+              <Navigate to="/" replace />
+            ) : (
+              <Login />
+            )
+          }
+        />
+        <Route
+          path="/password/forgot"
+          element={
+            isAuthenticated && user?.role === "Admin" ? (
+              <Navigate to="/" replace />
+            ) : (
+              <ForgotPassword />
+            )
+          }
+        />
+        <Route
+          path="/password/reset/:token"
+          element={
+            isAuthenticated && user?.role === "Admin" ? (
+              <Navigate to="/" replace />
+            ) : (
+              <ResetPassword />
+            )
+          }
+        />
         {/* Protected Admin Route */}
         <Route
           path="/"
@@ -63,6 +105,8 @@ function App() {
             )
           }
         />
+
+        <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>
       <ToastContainer theme="dark" />
     </Router>

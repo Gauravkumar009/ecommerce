@@ -1,3 +1,5 @@
+import React, { useEffect } from "react";
+import { useDispatch } from "react-redux";
 import Header from "./Header";
 import MiniSummary from "./dashboard-components/MiniSummary";
 import TopSellingProducts from "./dashboard-components/TopSellingProducts";
@@ -5,9 +7,32 @@ import Stats from "./dashboard-components/Stats";
 import MonthlySalesChart from "./dashboard-components/MonthlySalesChart";
 import OrdersChart from "./dashboard-components/OrdersChart";
 import TopProductsChart from "./dashboard-components/TopProductsChart";
+import { getDashboardStats } from "../store/slices/adminSlice";
 
 const Dashboard = () => {
-  return <></>;
+  const dispatch = useDispatch();
+
+  useEffect(() => {
+    dispatch(getDashboardStats());
+  }, [dispatch]);
+
+  return (
+    <div className="flex-1 flex flex-col min-h-screen bg-gray-50">
+      <Header />
+      <main className="flex-1 p-6 space-y-6 overflow-y-auto">
+        <Stats />
+        <MiniSummary />
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+          <MonthlySalesChart />
+          <OrdersChart />
+        </div>
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+          <TopProductsChart />
+          <TopSellingProducts />
+        </div>
+      </main>
+    </div>
+  );
 };
 
 export default Dashboard;

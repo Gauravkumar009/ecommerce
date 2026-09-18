@@ -157,6 +157,35 @@ export const fetchAllProducts = catchAsyncError(async (req, res, next) => {
     });
 });
 
+export const fetchFeaturedProducts = catchAsyncError(async (req, res) => {
+    const productFields = `p.*, COUNT(r.id)::int AS review_count`;
+
+    const [newProductsResult, topRatedResult] = await Promise.all([
+        database.query(`
+            SELECT ${productFields}
+            FROM products p
+            LEFT JOIN reviews r ON p.id = r.product_id
+            GROUP BY p.id
+            ORDER BY p.created_at DESC
+            LIMIT 20
+        `),
+        database.query(`
+            SELECT ${productFields}
+            FROM products p
+            LEFT JOIN reviews r ON p.id = r.product_id
+            GROUP BY p.id
+            ORDER BY COALESCE(p.ratings, 0) DESC, p.created_at DESC
+            LIMIT 20
+        `),
+    ]);
+
+    res.status(200).json({
+        success: true,
+        newProducts: newProductsResult.rows,
+        topRatedProducts: topRatedResult.rows,
+    });
+});
+
 export const updateProduct = catchAsyncError(async (req, res, next) => {
     const { productId } = req.params;
     const { name, description, price, category, stock } = req.body;

@@ -2,6 +2,7 @@ import { useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { Link, Navigate } from "react-router-dom";
 import { login } from "../store/slices/authSlice";
+
 const Login = () => {
   const [formData, setFormData] = useState({ email: "", password: "" });
 
@@ -10,36 +11,34 @@ const Login = () => {
   };
 
   const dispatch = useDispatch();
-  const hadleLogin = (e) => {
+  const handleLogin = (e) => {
     e.preventDefault();
-    const data = new FormData();
-    data.append("email", formData.email);
-    data.append("password", formData.password);
-    dispatch(login(data));
+    dispatch(login(formData));
   };
 
   const { user, isAuthenticated, loading } = useSelector((state) => state.auth);
-  if (isAuthenticated && user.role === "Admin") {
+  if (isAuthenticated && user?.role === "Admin") {
     return <Navigate to="/" />;
   }
 
   return (
     <>
-      <div classNmae="min-h-screen flex items-center justify-center bg-gradient-to-r from-blue-100 to-purple-200 px-4">
-        <div classNmae="bg-white shadow-lg rounded-2xl max-w-md w-full p-8 sm:p-10">
+      <div className="min-h-screen flex items-center justify-center bg-gradient-to-r from-blue-100 to-purple-200 px-4">
+        <div className="bg-white shadow-lg rounded-2xl max-w-md w-full p-8 sm:p-10">
           <h2 className="text-3xl font-bold text-center text-gray-800 mb-6">
-            Welcome BAck
+            Welcome Back
           </h2>
-          <form onSubmit={hadleLogin} className="space-y-5">
+          <form onSubmit={handleLogin} className="space-y-5">
             <div className="p-2">
-              <lable
+              <label
                 htmlFor="email"
                 className="block text-sm font-medium text-gray-700 mb-1"
               >
                 Email Address
-              </lable>
+              </label>
               <input
                 type="email"
+                id="email"
                 name="email"
                 value={formData.email}
                 onChange={handleChange}
@@ -49,14 +48,15 @@ const Login = () => {
               />
             </div>
             <div className="p-2">
-              <lable
+              <label
                 htmlFor="password"
                 className="block text-sm font-medium text-gray-700 mb-1"
               >
                 Password
-              </lable>
+              </label>
               <input
                 type="password"
+                id="password"
                 name="password"
                 value={formData.password}
                 onChange={handleChange}
@@ -68,11 +68,10 @@ const Login = () => {
             <div className="px-2 flex justify-between items-center text-sm text-gray-500">
               <div className="flex items-center space-x-2">
                 <input type="checkbox" id="remember" className="w-4 h-4" />
-                <lable htmlFor="remember">Remember me</lable>
+                <label htmlFor="remember">Remember me</label>
               </div>
               <Link
                 to={"/password/forgot"}
-                type="button"
                 className="text-blue-600 hover:underline"
               >
                 Forgot Password
@@ -80,7 +79,7 @@ const Login = () => {
             </div>
             <div className="px-2">
               <button
-                type="button"
+                type="submit"
                 className="w-full flex justify-center items-center gap-2 rounded-lg bg-blue-600 hover:bg-blue-700 text-white font-semibold py-3 transition"
                 disabled={loading}
               >

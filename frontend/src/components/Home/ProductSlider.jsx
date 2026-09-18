@@ -5,7 +5,7 @@ import { addToCart, updateQuantity, removeFromCart } from "../../store/slices/ca
 import { useDispatch, useSelector } from "react-redux";
 import { getImageUrl, handleImageError, getReviewCount } from "../../utils/imageHelper";
 
-const ProductSlider = ({ title, products }) => {
+const ProductSlider = ({ title, products, emptyMessage }) => {
   const scrollRef = useRef(null);
 
   const scroll = (direction) => {
@@ -68,11 +68,12 @@ const ProductSlider = ({ title, products }) => {
         </div>
       </div>
 
-      <div
-        ref={scrollRef}
-        className="flex space-x-6 overflow-x-auto scrollbar-hide pb-4"
-      >
-        {products && products.map((product) => {
+      {products?.length > 0 ? (
+        <div
+          ref={scrollRef}
+          className="flex space-x-6 overflow-x-auto scrollbar-hide pb-4"
+        >
+          {products.map((product) => {
           const createdAtDate = product.created_at || product.createdAt;
           const isNew = createdAtDate
             ? (new Date() - new Date(createdAtDate)) < 30 * 24 * 60 * 60 * 1000
@@ -208,8 +209,13 @@ const ProductSlider = ({ title, products }) => {
               </div>
             </Link>
           );
-        })}
-      </div>
+          })}
+        </div>
+      ) : (
+        <div className="glass-card px-6 py-10 text-center text-muted-foreground">
+          {emptyMessage || "Products will be available here soon."}
+        </div>
+      )}
     </section>
   );
 };

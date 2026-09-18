@@ -1,15 +1,21 @@
-import React from "react";
+import React, { useEffect } from "react";
 import HeroSlider from "../components/Home/HeroSlider";
 import CategoryGrid from "../components/Home/CategoryGrid";
 import ProductSlider from "../components/Home/ProductSlider";
 import FeatureSection from "../components/Home/FeatureSection";
 import NewsletterSection from "../components/Home/NewsletterSection";
-import { useSelector } from "react-redux";
+import { useDispatch, useSelector } from "react-redux";
+import { fetchFeaturedProducts } from "../store/slices/productSlice";
 
 const Index = () => {
-  const { topRatedProducts, newProducts, products } = useSelector(
+  const dispatch = useDispatch();
+  const { topRatedProducts, newProducts, products, featuredLoading } = useSelector(
     (state) => state.product || {}
   );
+
+  useEffect(() => {
+    dispatch(fetchFeaturedProducts());
+  }, [dispatch]);
 
   const displayNewProducts =
     newProducts && newProducts.length > 0
@@ -36,15 +42,16 @@ const Index = () => {
       <HeroSlider />
       <div className="container mx-auto px-4 pt-20">
         <CategoryGrid />
-        {displayNewProducts.length > 0 && (
-          <ProductSlider title="New Arrivals" products={displayNewProducts} />
-        )}
-        {displayTopRatedProducts.length > 0 && (
-          <ProductSlider
-            title="Top Rated Products"
-            products={displayTopRatedProducts}
-          />
-        )}
+        <ProductSlider
+          title="New Arrivals"
+          products={displayNewProducts}
+          emptyMessage={featuredLoading ? "Loading new arrivals..." : "No new arrivals yet."}
+        />
+        <ProductSlider
+          title="Top Rated Products"
+          products={displayTopRatedProducts}
+          emptyMessage={featuredLoading ? "Loading top-rated products..." : "No rated products yet."}
+        />
         <FeatureSection />
         <NewsletterSection />
       </div>
