@@ -27,7 +27,7 @@ const orderSlice = createSlice({
     },
     updateOrderStatusSuccess(state, action) {
       state.orders = state.orders.map((ord) =>
-        ord.id === action.payload.id ? action.payload : ord
+        ord.id === action.payload.id ? { ...ord, ...action.payload } : ord
       );
     },
     removeOrderSuccess(state, action) {
@@ -52,7 +52,7 @@ export const updateOrderStatus = (orderId, status) => async (dispatch) => {
   dispatch(orderSlice.actions.orderRequest());
   try {
     const res = await axiosInstance.put(`/order/admin/update/${orderId}`, { status });
-    dispatch(orderSlice.actions.updateOrderStatusSuccess(res.data.order || { id: orderId, order_status: status }));
+    dispatch(orderSlice.actions.updateOrderStatusSuccess(res.data.updatedOrder || { id: orderId, order_status: status }));
     dispatch(orderSlice.actions.orderSuccess());
     toast.success(res.data.message || "Order status updated");
   } catch (error) {
