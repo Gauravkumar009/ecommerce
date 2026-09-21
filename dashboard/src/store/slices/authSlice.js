@@ -147,7 +147,7 @@ export const forgotPassword = (email) => async (dispatch) => {
   dispatch(authSlice.actions.forgotPasswordRequest());
   try {
     const res = await axiosInstance.post(
-      "/auth/password/forgot?frontend_URL=http://localhost:5174",
+      `/auth/password/forgot?frontend_URL=${window.location.origin}`,
       email
     );
     dispatch(authSlice.actions.forgotPasswordSuccess());

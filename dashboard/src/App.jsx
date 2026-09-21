@@ -59,7 +59,7 @@ function App() {
   };
 
   return (
-    <Router>
+    <Router basename="/dashboard">
       <Routes>
         <Route
           path="/login"
