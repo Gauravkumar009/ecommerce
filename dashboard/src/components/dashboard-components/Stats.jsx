@@ -1,19 +1,19 @@
 import React from "react";
 import { formatNumber } from "../../lib/helper";
 import { useSelector } from "react-redux";
-import { DollarSign, Calendar, Clock, Users } from "lucide-react";
+import { DollarSign, CalendarDays, Calendar, TrendingUp } from "lucide-react";
 
 const Stats = () => {
   const {
     totalRevenueAllTime,
     todayRevenue,
     yesterdayRevenue,
-    totalUsersCount,
+    currentMonthSales,
   } = useSelector((state) => state.admin);
 
   const stats = [
     {
-      title: "Total Revenue",
+      title: "Total Revenue (All Time)",
       value: `₹${formatNumber(totalRevenueAllTime || 0)}`,
       icon: DollarSign,
       color: "bg-blue-50 text-blue-600",
@@ -27,13 +27,13 @@ const Stats = () => {
     {
       title: "Yesterday's Revenue",
       value: `₹${formatNumber(yesterdayRevenue || 0)}`,
-      icon: Clock,
-      color: "bg-amber-50 text-amber-600",
+      icon: CalendarDays,
+      color: "bg-indigo-50 text-indigo-600",
     },
     {
-      title: "Total Customers",
-      value: formatNumber(totalUsersCount || 0),
-      icon: Users,
+      title: "Current Month Sales",
+      value: `INR ${formatNumber(currentMonthSales || 0)}`,
+      icon: TrendingUp,
       color: "bg-purple-50 text-purple-600",
     },
   ];
@@ -45,18 +45,18 @@ const Stats = () => {
         return (
           <div
             key={idx}
-            className="bg-white p-5 rounded-xl shadow-sm border border-gray-100 flex items-center justify-between"
+            className="min-h-[126px] bg-white p-5 rounded-2xl shadow-sm border border-slate-100 flex items-start justify-between"
           >
             <div>
-              <p className="text-xs font-medium text-gray-500 uppercase tracking-wider">
+              <p className="max-w-[130px] text-xs font-bold text-slate-500 uppercase tracking-wide">
                 {item.title}
               </p>
-              <h3 className="text-2xl font-bold text-gray-800 mt-1">
+              <h3 className="text-2xl font-bold text-slate-800 mt-4">
                 {item.value}
               </h3>
             </div>
-            <div className={`p-3 rounded-lg ${item.color}`}>
-              <Icon className="w-6 h-6" />
+            <div className={`p-3 rounded-xl ${item.color}`}>
+              <Icon className="w-5 h-5" />
             </div>
           </div>
         );

@@ -22,8 +22,9 @@ const MonthlySalesChart = () => {
       ];
 
   return (
-    <div className="bg-white p-5 rounded-xl shadow-sm border border-gray-100">
-      <h3 className="text-base font-bold text-gray-800 mb-4">Monthly Sales Trend</h3>
+    <div className="bg-white p-5 rounded-2xl shadow-sm border border-slate-100">
+      <h3 className="text-base font-bold uppercase tracking-wide text-slate-800">Monthly Revenue</h3>
+      <p className="mb-4 text-sm text-slate-500">Total sales per month</p>
       <div className="h-64 w-full">
         <ResponsiveContainer width="100%" height="100%">
           <LineChart data={data}>

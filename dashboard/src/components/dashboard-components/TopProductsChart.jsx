@@ -22,8 +22,9 @@ const TopProductsChart = () => {
   }));
 
   return (
-    <div className="bg-white p-5 rounded-xl shadow-sm border border-gray-100">
-      <h3 className="text-base font-bold text-gray-800 mb-4">Top Sold Products</h3>
+    <div className="bg-white p-5 rounded-2xl shadow-sm border border-slate-100">
+      <h3 className="text-base font-bold uppercase tracking-wide text-slate-800">Top 5 Products</h3>
+      <p className="mb-4 text-sm text-slate-500">By total units sold</p>
       <div className="h-64 w-full">
         {data.length > 0 ? (
           <ResponsiveContainer width="100%" height="100%">

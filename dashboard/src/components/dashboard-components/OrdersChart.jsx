@@ -17,8 +17,8 @@ const OrdersChart = () => {
 
   return (
     <>
-      <div className="bg-white p-4 rounded-xl shadow-md">
-        <h3 className="font-semibold mb-2">Order Status</h3>
+      <div className="bg-white p-5 rounded-2xl shadow-sm border border-slate-100">
+        <h3 className="mb-2 text-base font-bold text-slate-800">Order Status</h3>
         <ResponsiveContainer width="100%" height={200}>
           <PieChart>
             <Pie
